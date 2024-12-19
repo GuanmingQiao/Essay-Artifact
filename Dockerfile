@@ -68,7 +68,7 @@ RUN cd /home/test/tools/ && \
     git checkout badd4ff && \
     git submodule update --init --recursive && \
     make
-
+    
 # Add scripts for each tool
 COPY --chown=test:test ./docker-setup/tool-scripts/ /home/test/scripts
 

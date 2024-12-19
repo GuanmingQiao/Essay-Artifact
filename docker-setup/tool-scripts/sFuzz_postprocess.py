@@ -27,6 +27,7 @@ def load(contract_name, path):
     idx = 0
     while idx < len(lines):
         line = lines[idx]
+        print(line)
         assert 'Dump' in line
         if 'Account' in line:
             addr = int(lines[idx + 1])
@@ -67,8 +68,8 @@ def load(contract_name, path):
                     'Function': '',
                     'Timestamp': '%d' % time_stamp,
                     'Blocknum': '%d' % block_num,
-                    'From': '%040x' % sender,
-                    'To': '%040x' % contract_addr,
+                    'From': '0x35c9dfd76bf02107ff4f7128bd69716612d31ddb',
+                    'To': '0x6b773032d99fb9aad6fc267651c446fa7f9301af',
                     'Value': '%d' % value,
                     'Data': data,
                     #'GasPrice': gas_price,

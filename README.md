@@ -1,107 +1,13 @@
-Smartian Artifact
-========
-
-[Smartian](https://github.com/SoftSec-KAIST/Smartian) is a grey-box fuzzer for
-Ethereum smart contracts. This repository contains artifacts for the
-experiments in our paper in ASE 2021, "Smartian: Enhancing Smart Contract
-Fuzzing with Static and Dynamic Data-Flow Analyses".
-
-# Changes
-
-The original version of artifact at the time publication is tagged with
-[v1.0](https://github.com/SoftSec-KAIST/Smartian-Artifact/releases/tag/v1.0).
-The latest commit uses Ubuntu 20.04 to use net8.0 for Smartian. As a result, we
-had to stop the support of ILF and Manticore in this repository. FYI, the last
-version that uses Ubuntu 18.04 is commit
-[a2d9ba](https://github.com/SoftSec-KAIST/Smartian-Artifact/commits/a2d9ba).
-
-# Structure
-
-We run all our experiments in a dockerized environment. In
-[docker-setup](./docker-setup), we provide various files required to build the
-docker image. The [benchmarks](./benchmarks) directory contains benchmarks we
-used for the experiments. In [scripts](./scripts), you can find scripts to run
-the experiments and analyze their results.
-
-# Setup
-
-We assume that your system has Docker installed. Also, you should be able to run
-the `docker` command without `sudo`. The following command will build the
-docker image name 'smartian-artifact', using our [Dockerfile](./Dockerfile).
-
-```
-$ ./build.sh
-```
-
-Next, check the `MAX_INSTANCE_NUM` configurations parameter in
-[scripts/run\_experiment.py](./scripts/run_experiment.py) script.
-We ran the experiments in a server machine with 88 cores, so this parameter is
-currently set to 72. Make sure that this parameter value is lower than the
-number of cores in your machine.
-
-# Evaluation of the impact of data-flow-analyses
-
-To reproduce the experiment in Section V.B of our paper, you can run the
-following script.  This script internally executes `run_experiment.py` to run
-Smartian with four different modes explained in the paper. Here, the script
-argument specifies the number of repetition for the experiment.
-
-```
-$ ./scripts/test_dfa_impact.sh 5
-```
-
-After the above command finishes, you will obtain the `output/result-dfa-impact`
-directory that contains the raw data. For instance, `dfa` subdirectory contains
-the result of running Smartian with both static and dynamic analyses enabled
-(which is the default mode).
-
-```
-$ ls output/result-dfa-impact/
-dfa  dynamic  nodfa  static
-$ ls output/result-dfa-impact/dfa/
-B1-smartian-1  B1-smartian-2  B1-smartian-3  B1-smartian-4  B1-smartian-5
-```
-
-Now, you can parse the experiment results as below. You may also take a look at
-`plot_cov.py`, `count_b1_alarm.py`, and `measure_overhead.py` scripts to get
-more statistics.
-```
-$ python scripts/plot_b1_cve.py output/result-dfa-impact/dfa/*
-```
-
-# Comparison between Smartian and other tools
-
-Similarly, you can use the following scripts to reproduce the experiment in
-Section V.C of our paper, which compares Smartian against other testing tools.
-
-```
-$ ./scripts/test_B1_compare.sh 5
-$ ./scripts/test_B2_compare.sh 5
-```
-
-Then, you will get the raw data under `output/result-B1-compare` and
-`output/result-B2-compare`.
-
-```
-$ ls output/result-B1-compare/
-mythril  sFuzz  smartian
-$ ls output/result-B2-compare/
-mythril  sFuzz  smartian
-```
-
-To obtain the results in our paper, you may refer to the following commands.
-```
-$ python scripts/plot_b1_cve.py output/result-B1-compare/smartian/*
-$ python scripts/plot_b2_bug.py output/result-B2-compare/smartian/*
-$ python scripts/count_b2_alarm.py output/result-B2-compare/smartian/*
-```
-
-# Large-scale experiment with Smartian
-
-Lastly, we also provide the script for the large-scale experiment in Section
-V.D of the paper.
-
-```
-$ ./scripts/test_large_scale.sh 1
-$ python scripts/count_b3_alarm.py output/result-large-scale/B3-smartian-1/
-```
+- `sudo rm -rf output/*`: Remove existing output files
+- `sudo ./scripts/test_B1_compare.sh 1`: Generate output directory with raw test cases
+- `sudo python3 ./scripts/convert_to_replayable.py`: Convert to replayables and get deployed address (which is always the same)
+  - `sudo python3 scripts/convert_to_replayable.py B1 benchmarks output/result-B1-compare/sFuzz/B1-noarg-sFuzz-1 sFuzz`
+  - `sudo python3 scripts/convert_to_replayable.py B1 benchmarks output/result-B1-compare/mythril/B1-noarg-mythril-1 mythril`
+  - `sudo python3 scripts/convert_to_replayable.py B1 benchmarks output/result-B1-compare/smartian/B1-noarg-smartian-1 smartian`
+- `sudo ./build_evaluator.sh`: Load deployment files into evaluator
+- `sudo python3 ./scripts/replay_coverage.py`: Replay coverage on instrumented EMV
+  - `sudo python3 scripts/replay_coverage.py output/result-B1-compare/smartian/B1-noarg-smartian-1 smartian`
+  - `sudo python3 scripts/replay_coverage.py output/result-B1-compare/sFuzz/B1-noarg-sFuzz-1 sFuzz`
+  - `sudo python3 scripts/replay_coverage.py output/result-B1-compare/mythril/B1-noarg-mythril-1 mythril`
+-  `sudo python3 scripts/measure_coverage.py`: Measure coverage against Ityfuzz
+  - `sudo python3 scripts/measure_coverage.py output/result-B1-compare/ityfuzz/B1-noarg-ityfuzz-1 output/result-B1-compare/smartian/B1-noarg-smartian-1`

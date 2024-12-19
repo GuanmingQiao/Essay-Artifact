@@ -3,9 +3,10 @@ from subprocess import PIPE
 from common import BASE_DIR, BENCHMARK_DIR
 
 IMAGE_NAME = "smartian-artifact"
-MAX_INSTANCE_NUM = 60
+ITYFUZZ_IMAGE = "ityfuzz-artifact"
+MAX_INSTANCE_NUM = 12
 AVAILABLE_BENCHMARKS = ["B1", "B1-noarg", "B2", "B3"]
-SUPPORTED_TOOLS = ["smartian", "sFuzz", "mythril"]
+SUPPORTED_TOOLS = ["smartian", "sFuzz", "mythril", "ityfuzz"]
 
 
 def run_cmd(cmd_str, check=True):
@@ -30,9 +31,17 @@ def run_cmd_in_docker(container, cmd_str, check=True):
         print(e)
         exit(1)
 
+def run_cmd_in_docker_with_output(container, cmd_str):
+    print("[*] Executing '%s' in container %s" % (cmd_str, container))
+    docker_prefix = f"docker exec {container} /bin/bash -c"
+    args = docker_prefix.split() + [cmd_str]
+    result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if result.returncode != 0 or result.stderr:
+        print(f"Error executing command in Docker: {result.stderr}")
+    return result.stdout
 
 def check_cpu_count():
-    n_str = run_cmd("nproc")
+    n_str = run_cmd("sysctl -n hw.ncpu")
     try:
         if int(n_str) < MAX_INSTANCE_NUM:
             print("Not enough CPU cores, please decrease MAX_INSTANCE_NUM")
@@ -79,11 +88,11 @@ def fetch_works(targets):
         works.append(targets.pop(0))
     return works
 
-def spawn_containers(targets):
+def spawn_containers(targets, image=IMAGE_NAME):
     for i in range(len(targets)):
         targ = targets[i][0]
         cmd = "docker run --rm -m=6g --cpuset-cpus=%d -it -d --name %s %s" % \
-                (i, targ, IMAGE_NAME)
+                (i, targ, image)
         run_cmd(cmd)
 
 def run_fuzzing(benchmark, targets, tool, timelimit, opt):
@@ -96,7 +105,7 @@ def run_fuzzing(benchmark, targets, tool, timelimit, opt):
         script = "/home/test/scripts/run_%s.sh" % tool
         cmd = "%s %s" % (script, args)
         run_cmd_in_docker(targ, cmd)
-    time.sleep(timelimit + 180)
+    time.sleep(timelimit + 3)
 
 def measure_coverage(benchmark, targets, tool):
     bench_dirname = decide_bench_dirname(benchmark)
@@ -108,7 +117,7 @@ def measure_coverage(benchmark, targets, tool):
         script = "/home/test/scripts/run_replayer.sh"
         cmd = "%s %s" % (script, args)
         run_cmd_in_docker(targ, cmd)
-    time.sleep(60)
+    time.sleep(3)
 
 def store_outputs(targets, outdir):
     for targ, _ in targets:
@@ -138,13 +147,14 @@ def main():
     if tool not in SUPPORTED_TOOLS:
         print("Unsupported tool: %s" % tool)
         exit(1)
+    image_name = IMAGE_NAME if tool != "ityfuzz" else ITYFUZZ_IMAGE
 
     outdir = decide_outdir(benchmark, tool)
     os.makedirs(outdir)
     targets = get_targets(benchmark)
     while len(targets) > 0:
         work_targets = fetch_works(targets)
-        spawn_containers(work_targets)
+        spawn_containers(work_targets, image_name)
         run_fuzzing(benchmark, work_targets, tool, timelimit, opt)
         measure_coverage(benchmark, work_targets, tool)
         store_outputs(work_targets, outdir)

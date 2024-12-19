@@ -2,7 +2,7 @@ import os
 
 ### Constants and configurations.
 
-TOTAL_TIME = 60 # Total fuzzing time in minute.
+TOTAL_TIME = 1 # Total fuzzing time in minute.
 PLOT_INTERVAL = 5 # Interval to plot the number of found bugs over time.
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), os.pardir)

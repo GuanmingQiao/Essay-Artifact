@@ -1,0 +1,70 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index a641e2e..54345a5 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -17,6 +17,9 @@ default = [
+     "full_trace",
+     "force_cache",
+     "real_balance",
++    "debug",
++    "deployer_is_attacker",
++    "print_pc_on_replay"
+ ]
+ evm = []
+ cmp = []
+@@ -47,7 +50,7 @@ sui_support = [
+ debug = []
+ flashloan_debug = []
+ no_etherscan = []
+-
++print_pc_on_replay = []
+ 
+ [dependencies]
+ bytes = { version = "1.2.1", features = ["serde"] }
+diff --git a/src/evm/contract_utils.rs b/src/evm/contract_utils.rs
+index 4fb8ae7..e65d8e5 100644
+--- a/src/evm/contract_utils.rs
++++ b/src/evm/contract_utils.rs
+@@ -66,7 +66,7 @@ use crate::evm::{
+ };
+ 
+ // to use this address, call rand_utils::fixed_address(FIX_DEPLOYER)
+-pub static FIX_DEPLOYER: &str = "8b21e662154b4bbc1ec0754d0238875fe3d22fa6";
++pub static FIX_DEPLOYER: &str = "24cd2edba056b7c654a50e8201b619d4f624fdda";
+ pub static FOUNDRY_DEPLOYER: &str = "1804c8AB1F12E6bbf3894d4083f33e07309d1f38";
+ pub static FOUNDRY_SETUP_ADDR: &str = "e1A425f1AC34A8a441566f93c82dD730639c8510";
+ 
+diff --git a/src/evm/middlewares/coverage.rs b/src/evm/middlewares/coverage.rs
+index 6d99e19..2d0f426 100644
+--- a/src/evm/middlewares/coverage.rs
++++ b/src/evm/middlewares/coverage.rs
+@@ -186,10 +186,12 @@ impl CoverageReport {
+         info!("============= Coverage Summary =============");
+         for (addr, cov) in &self.coverage {
+             info!(
+-                "{}: {:.2}% Instruction Covered, {:.2}% Branch Covered",
++                "{}: {:.2}% ({}) Instruction Covered, {:.2}% ({}) Branch Covered",
+                 addr,
+                 (cov.instruction_coverage * 100) as f64 / cov.total_instructions as f64,
+-                (cov.branch_coverage * 100) as f64 / cov.total_branches as f64
++                cov.instruction_coverage,
++                (cov.branch_coverage * 100) as f64 / cov.total_branches as f64,
++                cov.branch_coverage
+             );
+         }
+     }
+diff --git a/src/fuzzers/evm_fuzzer.rs b/src/fuzzers/evm_fuzzer.rs
+index bac6f50..78177ba 100644
+--- a/src/fuzzers/evm_fuzzer.rs
++++ b/src/fuzzers/evm_fuzzer.rs
+@@ -602,6 +602,10 @@ pub fn evm_fuzzer(
+ 
+             // dump coverage:
+             cov_middleware.borrow_mut().record_instruction_coverage();
++
++            #[cfg(feature = "print_pc_on_replay")]
++            println!("{}", serde_json::to_string(&cov_middleware.borrow_mut().pc_coverage).unwrap());
++
+             // unsafe {
+             //     EVAL_COVERAGE = false;
+             //     CALL_UNTIL = u32::MAX;
