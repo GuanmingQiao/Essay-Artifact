@@ -1,4 +1,3 @@
-
 import math
 import os
 import json
@@ -18,7 +17,7 @@ def parse_coverage(dir):
         if not i.endswith(".json"):
             continue
 
-        cov = json.load(open(os.path.join(dir, i)))
+        cov = json.load(open(os.path.join(dir, i)))["coverage"]
         total_instr_cov = 0
         total_branch_cov = 0
         for (k, v) in cov.items():
@@ -46,9 +45,9 @@ if __name__ == "__main__":
     
     results = {}
     for addr in tqdm.tqdm(os.listdir(ityfuzz_out)):
-        # with open(f"{ityfuzz_out}/{addr}/log.txt") as f:
-        #         if "Failed to deploy contract" in f.read():
-        #             continue
+        with open(f"{ityfuzz_out}/{addr}/log.txt") as f:
+                if "Failed to deploy contract" in f.read():
+                    continue
         coverage_path = os.path.join(ityfuzz_out, addr, "coverage")
         cov = parse_coverage(coverage_path)
         results[addr] = cov

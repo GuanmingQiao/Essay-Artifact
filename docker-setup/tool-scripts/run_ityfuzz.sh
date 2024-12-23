@@ -9,7 +9,6 @@
 # Arg6 : Optional argument to pass
 
 WORKDIR=/home/test/ityfuzz-workspace
-export PATH="$PATH:/home/test/.ityfuzz/bin"
 
 # Set up workdir
 mkdir -p $WORKDIR
@@ -22,8 +21,8 @@ cp $3 $WORKDIR/bench/
 cp $4 $WORKDIR/bench/
 
 # Run Ityfuzz
-timeout $1 ityfuzz evm -t "${WORKDIR}/bench/*" -f > \
+timeout $1 /app/ityfuzz/target/release/ityfuzz evm -t "${WORKDIR}/bench/*" --work-dir "${WORKDIR}/work_dir" -f > \
   $WORKDIR/stdout.txt 2>&1
 
-mv work_dir $WORKDIR/output
+mv $WORKDIR/work_dir $WORKDIR/output
 mv $WORKDIR/stdout.txt $WORKDIR/output/stdout.txt

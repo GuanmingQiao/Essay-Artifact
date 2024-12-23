@@ -23,10 +23,10 @@ mkdir -p $OUTDIR/result-B1-compare
 
 # Run smartian, sFuzz, and mythril.
 for i in $(seq $1); do
-    python3 $SCRIPTDIR/run_experiment.py B1-noarg smartian 120
-    python3 $SCRIPTDIR/run_experiment.py B1-noarg sFuzz 120
-    python3 $SCRIPTDIR/run_experiment.py B1-noarg mythril 120
-    python3 $SCRIPTDIR/run_experiment.py B1-noarg ityfuzz 120
+    #python3 $SCRIPTDIR/run_experiment.py B1-noarg smartian 120
+    python3 $SCRIPTDIR/run_experiment.py B1-noarg sFuzz 10
+    #python3 $SCRIPTDIR/run_experiment.py B1-noarg mythril 10
+    #python3 $SCRIPTDIR/run_experiment.py B1-noarg ityfuzz 120
 done
 mkdir -p $OUTDIR/result-B1-compare/smartian
 mv $OUTDIR/B1-noarg-smartian-* $OUTDIR/result-B1-compare/smartian/

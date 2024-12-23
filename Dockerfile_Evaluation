@@ -1,44 +1,8 @@
-FROM ubuntu:20.04
-
-ENV DEBIAN_FRONTEND="noninteractive"
-RUN apt-get update && apt-get install -y \
-    curl \
-    jq \
-    python3 \
-    python3-pip \
-    python3-setuptools \
-    python3-wheel \
-    python3-venv libz3-dev libssl-dev clang pkg-config cmake wget 
-RUN apt install -y git
-RUN rm -rf /var/lib/apt/lists/*
-RUN pip3 install --upgrade pip
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
-
-# build ityfuzz
-WORKDIR /app
-RUN git clone https://github.com/fuzzland/ityfuzz.git
-WORKDIR /app/ityfuzz
-RUN git checkout master
-COPY ./docker-setup/evaluator/eval.patch /app/ityfuzz/eval.patch
-RUN git apply eval.patch
-
-
-RUN mv /root/.cargo/bin/* /usr/local/bin/
-ENV PATH="/usr/local/bin:${PATH}"
-RUN bash -c "cargo build --release"
-
-RUN pip3 install tqdm web3 matplotlib
-
-# # cleanup rust cache
-RUN rm -rf /root/.cargo/registry
-RUN rm -rf /app/ityfuzz/target/release/deps
-RUN rm -rf /app/ityfuzz/target/release/build
-RUN rm -rf /var/lib/apt/lists/*
-RUN rm -rf /root/.rustup
-RUN rm -rf /root/.cache
-RUN rm -rf /root/.nuget
+FROM fuzzland/ityfuzz-artifacts:latest
 
 COPY ./output /app/ityfuzz/output
 COPY ./deployment-mythril /app/ityfuzz/deployment-mythril
 COPY ./deployment-sFuzz /app/ityfuzz/deployment-sFuzz
 COPY ./deployment-smartian /app/ityfuzz/deployment-smartian
+
+WORKDIR /app/ityfuzz

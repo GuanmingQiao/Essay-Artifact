@@ -43,6 +43,7 @@ function postprocess_mythril() {
     # Move logs
     mv $WORKDIR/output/log.txt $OUTDIR/log.txt
     mv $WORKDIR/output/stdout.txt $OUTDIR/stdout.txt
+    mv $WORKDIR/output/executions.html $OUTDIR/executions.html
     # Move bug tc
     mv $WORKDIR/output/bugs $OUTDIR/bugs
     # Move raw tc

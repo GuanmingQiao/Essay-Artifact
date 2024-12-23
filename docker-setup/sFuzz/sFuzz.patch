@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index e48a9dc9b..140e32c2a 100644
+index e48a9dc9b..46eb5400e 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -39,8 +39,8 @@ option(HUNTER_RUN_UPLOAD "Upload binaries to the cache server" ${run_upload})
@@ -128,7 +128,7 @@ index 74ed3a50b..b8fd02cb2 100644
  
  std::ostream& operator<<(std::ostream& _out, ExecutionResult const& _er);
 diff --git a/libfuzzer/Fuzzer.cpp b/libfuzzer/Fuzzer.cpp
-index cfd2e420a..3beba5ade 100644
+index cfd2e420a..96a672283 100644
 --- a/libfuzzer/Fuzzer.cpp
 +++ b/libfuzzer/Fuzzer.cpp
 @@ -14,7 +14,7 @@ using namespace fuzzer;
@@ -269,26 +269,59 @@ index cfd2e420a..3beba5ade 100644
    auto revisedData = ContractABI::postprocessTestData(data);
    FuzzItem item(revisedData);
 -  item.res = te.exec(revisedData, validJumpis);
+-  //Logger::debug(Logger::testFormat(item.data));
 +  item.res = te.exec(revisedData, validJumpis, isMutated);
-   //Logger::debug(Logger::testFormat(item.data));
++  Logger::debug(Logger::testFormat(item.data));
    fuzzStat.totalExecs ++;
 +  bool hasNewCov = false;
 +  double elapsed = timer.elapsed();
    for (auto tracebit: item.res.tracebits) {
      if (!tracebits.count(tracebit)) {
        // Remove leader
-@@ -166,6 +287,7 @@ FuzzItem Fuzzer::saveIfInterest(TargetExecutive& te, bytes data, uint64_t depth,
+@@ -164,8 +285,9 @@ FuzzItem Fuzzer::saveIfInterest(TargetExecutive& te, bytes data, uint64_t depth,
+       leaders.insert(make_pair(tracebit, leader));
+       if (depth + 1 > fuzzStat.maxdepth) fuzzStat.maxdepth = depth + 1;
        fuzzStat.lastNewPath = timer.elapsed();
-       Logger::debug("Cover new branch "  + tracebit);
-       Logger::debug(Logger::testFormat(item.data));
+-      Logger::debug("Cover new branch "  + tracebit);
+-      Logger::debug(Logger::testFormat(item.data));
++      // Logger::debug("Cover new branch "  + tracebit);
++      //Logger::debug(Logger::testFormat(item.data));
 +      hasNewCov = true;
      }
    }
    for (auto predicateIt: item.res.predicates) {
-@@ -198,11 +320,14 @@ FuzzItem Fuzzer::saveIfInterest(TargetExecutive& te, bytes data, uint64_t depth,
-       Logger::debug("Found new uncovered branch");
-       Logger::debug("now: " + predicateIt.second.str());
-       Logger::debug(Logger::testFormat(item.data));
+@@ -176,9 +298,9 @@ FuzzItem Fuzzer::saveIfInterest(TargetExecutive& te, bytes data, uint64_t depth,
+         && lIt->second.comparisonValue > predicateIt.second // ComparisonValue is better
+     ) {
+       // Debug now
+-      Logger::debug("Found better test case for uncovered branch " + predicateIt.first);
+-      Logger::debug("prev: " + lIt->second.comparisonValue.str());
+-      Logger::debug("now : " + predicateIt.second.str());
++      // Logger::debug("Found better test case for uncovered branch " + predicateIt.first);
++      // Logger::debug("prev: " + lIt->second.comparisonValue.str());
++      // Logger::debug("now : " + predicateIt.second.str());
+       // Stop debug
+       leaders.erase(lIt); // Remove leader
+       item.depth = depth + 1;
+@@ -186,7 +308,7 @@ FuzzItem Fuzzer::saveIfInterest(TargetExecutive& te, bytes data, uint64_t depth,
+       leaders.insert(make_pair(predicateIt.first, leader)); // Insert leader
+       if (depth + 1 > fuzzStat.maxdepth) fuzzStat.maxdepth = depth + 1;
+       fuzzStat.lastNewPath = timer.elapsed();
+-      Logger::debug(Logger::testFormat(item.data));
++      // Logger::debug(Logger::testFormat(item.data));
+     } else if (lIt == leaders.end()) {
+       auto leader = Leader(item, predicateIt.second);
+       item.depth = depth + 1;
+@@ -195,14 +317,17 @@ FuzzItem Fuzzer::saveIfInterest(TargetExecutive& te, bytes data, uint64_t depth,
+       if (depth + 1 > fuzzStat.maxdepth) fuzzStat.maxdepth = depth + 1;
+       fuzzStat.lastNewPath = timer.elapsed();
+       // Debug
+-      Logger::debug("Found new uncovered branch");
+-      Logger::debug("now: " + predicateIt.second.str());
+-      Logger::debug(Logger::testFormat(item.data));
++      // Logger::debug("Found new uncovered branch");
++      // Logger::debug("now: " + predicateIt.second.str());
++      // Logger::debug(Logger::testFormat(item.data));
 +      hasNewCov = true;
      }
    }

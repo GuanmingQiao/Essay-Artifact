@@ -18,9 +18,10 @@ mkdir -p $WORKDIR
 # Set up environment
 mkdir -p $WORKDIR/output
 mkdir -p $WORKDIR/output/bugs
+touch $WORKDIR/output/executions.html
 touch $WORKDIR/output/log.txt
 # Run mythril
-$TOOLDIR/mythril/myth analyze -f $3 --execution-timeout $1 $6 > \
+$TOOLDIR/mythril/myth -v 5 analyze -f $3 --execution-timeout $1 --graph $WORKDIR/output/executions.html $6 > \
   $WORKDIR/output/stdout.txt 2>&1
 
 deactivate
